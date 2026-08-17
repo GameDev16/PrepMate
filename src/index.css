@@ -1,0 +1,235 @@
+@import "tailwindcss";
+
+@theme {
+  --color-electric-iris: #2727e6;
+  --color-ink-black: #111118;
+  --color-paper-white: #ffffff;
+  --color-chalk-blue: #f0f6ff;
+  --color-frost-blue: #e1edff;
+  --color-carbon: #000000;
+  --color-marker-red: #ff4141;
+  --color-hi-yellow: #ffda00;
+  --color-powder-sky: #91d8ec;
+  --color-bubblegum-pink: #ffbac4;
+  --color-jelly-green: #16ab59;
+  --color-sunbeam: #ffe54d;
+
+  --font-haas-grot-disp: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-haas-grot-text: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-martian-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+:root {
+  --electric-iris: #2727e6;
+  --ink: #111118;
+  --paper: #ffffff;
+  --chalk: #f0f6ff;
+  --frost: #e1edff;
+  --carbon: #000000;
+  --marker-red: #ff4141;
+  --hi-yellow: #ffda00;
+  --powder-sky: #91d8ec;
+  --bubblegum: #ffbac4;
+  --jelly-green: #16ab59;
+  --sunbeam: #ffe54d;
+
+  --font-haas-grot-disp: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-haas-grot-text: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-martian-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Font families & SuperHi typography rules */
+.font-display {
+  font-family: var(--font-haas-grot-disp);
+  font-feature-settings: "ss01" on, "tnum" on;
+}
+
+.font-body {
+  font-family: var(--font-haas-grot-text);
+}
+
+.font-mono {
+  font-family: var(--font-martian-mono);
+}
+
+/* Hard shadow utilities (SuperHi 0px blur elevation) */
+.shadow-hard {
+  box-shadow: 0 4px 0 0 var(--ink);
+}
+
+.shadow-hard-sm {
+  box-shadow: 0 2px 0 0 var(--ink);
+}
+
+.shadow-hard-iris {
+  box-shadow: 0 4px 0 0 var(--electric-iris);
+}
+
+.shadow-hard-iris-sm {
+  box-shadow: 0 2px 0 0 var(--electric-iris);
+}
+
+.shadow-hard-red {
+  box-shadow: 0 4px 0 0 var(--marker-red);
+}
+
+.shadow-hard-green {
+  box-shadow: 0 4px 0 0 var(--jelly-green);
+}
+
+/* Torn-paper edge — a jagged cut on the right side of a card, used once
+   as the signature illustration's "source document" (see LandingPage).
+   Percentage-based so it scales with the element rather than needing a
+   fixed pixel size. */
+.torn-right {
+  clip-path: polygon(
+    0% 0%, 100% 0%,
+    91% 6%, 100% 11%, 90% 17%, 100% 23%,
+    89% 29%, 100% 35%, 92% 41%, 100% 47%,
+    90% 53%, 100% 59%, 88% 65%, 100% 71%,
+    91% 77%, 100% 83%, 89% 89%, 100% 95%,
+    93% 100%,
+    0% 100%
+  );
+}
+
+/* Pill & Card Radii */
+.btn-pill {
+  border-radius: 48px;
+}
+
+.btn-pill-full {
+  border-radius: 5000px;
+}
+
+.card-rounded {
+  border-radius: 24px;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes toastCountdown {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+.animate-toast-countdown {
+  animation: toastCountdown 5s linear forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+/* Color utilities */
+.bg-electric-iris { background-color: var(--electric-iris); }
+.bg-ink { background-color: var(--ink); }
+.bg-paper { background-color: var(--paper); }
+.bg-chalk { background-color: var(--chalk); }
+.bg-frost { background-color: var(--frost); }
+.bg-carbon { background-color: var(--carbon); }
+.bg-marker-red { background-color: var(--marker-red); }
+.bg-hi-yellow { background-color: var(--hi-yellow); }
+.bg-powder-sky { background-color: var(--powder-sky); }
+.bg-bubblegum { background-color: var(--bubblegum); }
+.bg-jelly-green { background-color: var(--jelly-green); }
+.bg-sunbeam { background-color: var(--sunbeam); }
+
+.text-electric-iris { color: var(--electric-iris); }
+.text-ink { color: var(--ink); }
+.text-paper { color: var(--paper); }
+.text-chalk { color: var(--chalk); }
+.text-frost { color: var(--frost); }
+.text-carbon { color: var(--carbon); }
+.text-marker-red { color: var(--marker-red); }
+.text-hi-yellow { color: var(--hi-yellow); }
+.text-powder-sky { color: var(--powder-sky); }
+.text-bubblegum { color: var(--bubblegum); }
+.text-jelly-green { color: var(--jelly-green); }
+.text-sunbeam { color: var(--sunbeam); }
+
+.border-electric-iris { border-color: var(--electric-iris); }
+.border-ink { border-color: var(--ink); }
+.border-frost { border-color: var(--frost); }
+
+/* Base styles: SuperHi near-white pale-blue canvas (#f0f6ff) with deep ink text */
+body {
+  font-family: var(--font-haas-grot-text);
+  background-color: var(--chalk);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--chalk);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--frost);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--electric-iris);
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--electric-iris);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background-color: var(--frost);
+  color: var(--ink);
+}
