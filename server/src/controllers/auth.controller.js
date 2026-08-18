@@ -1,4 +1,5 @@
 const { randomUUID: uuidv4 } = require("crypto");
+const dns = require("dns");
 const { db } = require("../db");
 const {
   users,
@@ -41,6 +42,34 @@ async function register(req, res) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    // Confirm the domain can actually receive mail — no OTP/verification
+    // pipeline needed, just filters out typo'd or made-up domains.
+    const emailDomain = email.split("@")[1];
+    try {
+      const mxRecords = await dns.promises.resolveMx(emailDomain);
+      if (!mxRecords || mxRecords.length === 0) {
+        return res
+          .status(400)
+          .json({ error: "Email domain does not accept mail" });
+      }
+    } catch {
+      return res.status(400).json({ error: "Email domain does not exist" });
+    }
+
+    // Confirm the domain can actually receive mail — no OTP/verification
+    // pipeline needed, just filters out typo'd or made-up domains.
+    const emailDomain = email.split("@")[1];
+    try {
+      const mxRecords = await dns.promises.resolveMx(emailDomain);
+      if (!mxRecords || mxRecords.length === 0) {
+        return res
+          .status(400)
+          .json({ error: "Email domain does not accept mail" });
+      }
+    } catch {
+      return res.status(400).json({ error: "Email domain does not exist" });
     }
 
     // Validate password
@@ -171,7 +200,10 @@ async function logout(req, res) {
       if (user) {
         await db
           .update(users)
-          .set({ tokenVersion: sql`${users.tokenVersion} + 1`, updatedAt: new Date() })
+          .set({
+            tokenVersion: sql`${users.tokenVersion} + 1`,
+            updatedAt: new Date(),
+          })
           .where(eq(users.id, user.id));
       }
     }
@@ -270,8 +302,8 @@ async function resetPassword(req, res) {
         and(
           eq(resetTokens.token, token),
           eq(resetTokens.used, false),
-          gt(resetTokens.expiresAt, new Date())
-        )
+          gt(resetTokens.expiresAt, new Date()),
+        ),
       )
       .limit(1);
 
@@ -381,7 +413,7 @@ async function googleCallback(req, res) {
       "https://www.googleapis.com/oauth2/v2/userinfo",
       {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
-      }
+      },
     );
 
     if (!userInfoResponse.ok) {
@@ -460,5 +492,3 @@ module.exports = {
   googleAuth,
   googleCallback,
 };
-
-

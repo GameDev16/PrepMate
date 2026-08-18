@@ -27,7 +27,23 @@ const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 const NODE_ENV = process.env.NODE_ENV || "development";
 
 // Middleware
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "script-src": ["'self'", "https://checkout.razorpay.com"],
+        "frame-src": ["'self'", "https://api.razorpay.com"],
+        "connect-src": [
+          "'self'",
+          "https://api.razorpay.com",
+          "https://lumberjack.razorpay.com",
+        ],
+      },
+    },
+  }),
+);
 app.use(
   cors({
     origin: CLIENT_URL,
