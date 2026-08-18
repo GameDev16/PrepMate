@@ -1,11 +1,11 @@
-const pdfParse = require("pdf-parse");
+const path = require("path");
+const { Worker } = require("worker_threads");
 const { db } = require("../db");
 const { pdfUploads, notebooks } = require("../db/schema");
 const { eq, and } = require("drizzle-orm");
 
 function verifyPdfMagicBytes(buffer) {
   if (!buffer || buffer.length < 4) return false;
-  // PDF magic header signature: %PDF (0x25 0x50 0x44 0x46)
   return (
     buffer[0] === 0x25 &&
     buffer[1] === 0x50 &&
@@ -14,12 +14,39 @@ function verifyPdfMagicBytes(buffer) {
   );
 }
 
-// Postgres text/varchar columns reject NUL (0x00) bytes outright, throwing
-// "invalid byte sequence for encoding UTF8". Some PDFs (depending on their
-// internal font encoding) yield extracted text containing literal NUL
-// characters, which would otherwise crash the insert below.
 function stripNullBytes(str) {
   return typeof str === "string" ? str.replace(/\u0000/g, "") : str;
+}
+
+// pdf-parse does genuinely CPU-bound synchronous work (decompression, font
+// decoding via pdf.js internals) — running it on the main thread blocks
+// Node's single event loop, which freezes every other in-flight request on
+// this process until it finishes. Running it in a worker thread keeps the
+// main thread free to keep handling other users' requests concurrently.
+function parsePdfInWorker(buffer) {
+  return new Promise((resolve) => {
+    const worker = new Worker(
+      path.join(__dirname, "../workers/pdfParseWorker.js"),
+      { workerData: { buffer } },
+    );
+
+    const timeout = setTimeout(() => {
+      worker.terminate();
+      resolve({ success: false, error: "PDF parsing timed out" });
+    }, 30000);
+
+    worker.once("message", (result) => {
+      clearTimeout(timeout);
+      resolve(result);
+      worker.terminate();
+    });
+
+    worker.once("error", (err) => {
+      clearTimeout(timeout);
+      resolve({ success: false, error: err.message || "Worker crashed" });
+      worker.terminate();
+    });
+  });
 }
 
 async function upload(req, res) {
@@ -32,17 +59,14 @@ async function upload(req, res) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    // Validate file type
     if (!file.originalname.toLowerCase().endsWith(".pdf")) {
       return res.status(400).json({ error: "Only PDF files are allowed" });
     }
 
-    // Validate file size (20MB)
     if (file.size > 20 * 1024 * 1024) {
       return res.status(400).json({ error: "File size must be under 20MB" });
     }
 
-    // Strict Magic Byte Signature Verification
     if (!verifyPdfMagicBytes(file.buffer)) {
       return res.status(415).json({
         error:
@@ -50,7 +74,6 @@ async function upload(req, res) {
       });
     }
 
-    // Validate notebook ownership if provided
     if (notebookId) {
       const [notebook] = await db
         .select()
@@ -63,21 +86,17 @@ async function upload(req, res) {
       }
     }
 
-    // Extract text from PDF
     let extractedText = "";
     let pageCount = 0;
 
-    try {
-      const pdfData = await pdfParse(new Uint8Array(file.buffer));
-      extractedText = stripNullBytes(pdfData.text || "");
-      pageCount = pdfData.numpages || 0;
-    } catch (pdfError) {
-      console.error("PDF parsing error:", pdfError);
-      extractedText = "";
-      pageCount = 0;
+    const pdfResult = await parsePdfInWorker(file.buffer);
+    if (pdfResult.success) {
+      extractedText = stripNullBytes(pdfResult.text);
+      pageCount = pdfResult.numpages;
+    } else {
+      console.error("PDF parsing error:", pdfResult.error);
     }
 
-    // Check if extracted text is sufficient
     if (!extractedText || extractedText.trim().length < 50) {
       return res.status(422).json({
         error:
@@ -85,12 +104,10 @@ async function upload(req, res) {
       });
     }
 
-    // Truncate to 100,000 characters
     if (extractedText.length > 100000) {
       extractedText = extractedText.substring(0, 100000);
     }
 
-    // Create upload record
     const [upload] = await db
       .insert(pdfUploads)
       .values({
